@@ -118,36 +118,28 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
           exec > /tmp/userdata.log 2>&1
+
           # Actualizar todas las apps
           apt update -y
+
           # Instalar AWS helper scripts de CloudFormation
           mkdir -p /opt/aws/bin
           wget https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
           python3 -m easy_install --script-dir /opt/aws/bin aws-cfn-bootstrap-py3-latest.tar.gz
           ln -s /root/aws-cfn-bootstrap-latest/init/ubuntu/cfn-hup /etc/init.d/cfn-hup
           /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets full_install --region ${AWS::Region}
-          # Instalar MVN
-          cat > /tmp/install_script.sh << EOF
-            # Start Install
-            wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
-            . ~/.nvm/nvm.sh
-            . ~/bashrc
-            #Instalando al ultima version de node
-            nvm install --lts
-            #Creamos nuestra app
-            curl -sL https://github.com/gonzalosalmeron/http-server/archive/master.zip --output master.zip
-            sudo apt install unzip
-            unzip master.zip
-            mv http-server-main app
-            rm -R master.zip
-            mkdir logs
-            cd app
-            npm install
-            npm start
-          EOF
-          chown ubuntu:ubuntu /tmp/install_script.sh && chmod a+x /tmp/install_script.sh
-          sleep 1; su - ubuntu -c "/tmp/install_script.sh"
-          # Esta tiene que ser la ultima instrucción
+
+          # Instalamos code deploy
+          sudo apt update -y
+          sudo apt install ruby-full -y
+          sudo apt install wget -y
+          cd /home/ubuntu
+          wget https://aws-codedeploy-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/install
+          chmod +x ./install
+          sudo ./install auto > /tmp/logfile
+          sudo service codedeploy-agent start
+
+          # Esta tiene que ser la ultima instrucción (da la señal de que ha terminado)
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
       Tags:
         - Key: Name
