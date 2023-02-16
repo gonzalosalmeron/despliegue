@@ -146,6 +146,49 @@ Resources:
           Value: !Ref AWS::StackName
       IamInstanceProfile: 'LabInstanceProfile'
 
+  CodeDeployApplication: 
+    Type: AWS::CodeDeploy::Application 
+    Properties:
+      ApplicationName: 'CodeDeploy-awsbootstrap'
+      ComputePlatform: Server
+
+  DeploymentGroup: 
+    Type: AWS::CodeDeploy::DeploymentGroup
+    DependsOn: EC2Instance
+    Properties: 
+      # AlarmConfiguration: 
+      #   AlarmConfiguration
+      ApplicationName: !Ref CodeDeployApplication
+      # AutoRollbackConfiguration: 
+      #   AutoRollbackConfiguration
+      # AutoScalingGroups: 
+      #   - String
+      # Deployment: 
+      #   Deployment
+      DeploymentConfigName: CodeDeployDefault.AllAtOnce
+      DeploymentGroupName: 'server-group'
+      DeploymentStyle:
+        DeploymentType: IN_PLACE
+        DeploymentOption: WITHOUT_TRAFFIC_CONTROL 
+      Ec2TagFilters: 
+        - Key: aws:cloudformation:stack-name
+          Type: KEY_AND_VALUE
+          Value: !Ref AWS::StackName
+      # Ec2TagSet: 
+      #   EC2TagSet
+      # LoadBalancerInfo: 
+      #   LoadBalancerInfo
+      # OnPremisesInstanceTagFilters: 
+      #   - TagFilter
+      # OnPremisesTagSet: 
+      #   OnPremisesTagSet
+      # OutdatedInstancesStrategy: String
+      ServiceRoleArn: 'arn:aws:iam::569686665482:role/LabRole'
+      # Tags: 
+      #   - Tag
+      # TriggerConfigurations: 
+      #   - TriggerConfig
+
 Outputs:
   InstanceId:
     Description: 'InstanceId of the newly created EC2 instance'
